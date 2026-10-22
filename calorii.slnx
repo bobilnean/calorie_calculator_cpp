@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="calorii/calorii.vcxproj" Id="5d8b1f93-7fb2-4a84-99f1-467cbe57265d" />
+</Solution>
