@@ -26,6 +26,7 @@ vector<Aliment> citire()
 	getline(f, linie);
 	while (getline(f, linie))
 	{
+		if (linie == "")continue; //sar peste liniile goale
 		stringstream ss(linie);
 		string camp;
 		Aliment a;
@@ -104,15 +105,31 @@ int main()
 	vector<Consumat> consumate;
 	float caloriiZ=0, proteineZ=0, grasimiZ=0, grasimi_saturateZ=0, grasimi_poliZ=0, grasimi_monoZ=0, carbohidratiZ=0, fibreZ=0, zaharZ=0, alcoolZ=0;
 	while (true) {
-		cout << "\nce aliment cautati? (tastati 'gata' daca ati terminat sau 'scot' daca doriti sa eliminati un aliment) "; cout << endl;
+		cout << "\nce aliment cautati? (tastati 'gata' daca ati terminat sau 'sterge' daca doriti sa eliminati un aliment) "; cout << endl;
 		string TEXT_CAUTAT; getline(cin, TEXT_CAUTAT);
 		if (TEXT_CAUTAT == "gata")break;
 		if (TEXT_CAUTAT == "sterge") {
-			if (consumate.size() == 0)continue;
-			g<<"\nce aliment doriti sa scoateti? tastati numarul din lista"
+			if (consumate.size() == 0) { cout << "\nnu aveti alimente de sters\n"; continue; }
+			cout << "\nce aliment doriti sa scoateti? tastati numarul din lista\n";
 			for (int i = 0;i < consumate.size();i++) {
-				g << i + 1 << consumate[i].nume << "\n";
+				cout << i + 1 << ". " << consumate[i].aliment.nume << " - " << consumate[i].gramaj << " g\n";
 			}
+			int nr; cin >> nr;
+			if (cin.fail() || nr < 1 || nr >(int)consumate.size())
+			{
+				cin.clear();
+				cin.ignore(10000, '\n');
+				cout << "\nnu exista acest numar in lista\n";
+				continue;
+			}
+			cin.ignore(10000, '\n');
+			Consumat sters = consumate[nr - 1];
+			float p = sters.gramaj / 100;
+			//scad din totaluri ce am sters
+			caloriiZ -= sters.aliment.calorii * p; proteineZ -= sters.aliment.proteine * p; grasimiZ -= sters.aliment.grasimi * p; grasimi_saturateZ -= sters.aliment.grasimi_saturate * p; grasimi_poliZ -= sters.aliment.grasimi_poli * p; grasimi_monoZ -= sters.aliment.grasimi_mono * p; carbohidratiZ -= sters.aliment.carbohidrati * p; fibreZ -= sters.aliment.fibre * p; zaharZ -= sters.aliment.zahar * p; alcoolZ -= sters.aliment.alcool * p;
+			consumate.erase(consumate.begin() + nr - 1); //scot elementul de pe pozitia nr-1 din vector
+			cout << "ati sters " << sters.aliment.nume << "\n";
+			continue;
 		}
 		vector<Aliment> rezultate = sugereaza(alimente, TEXT_CAUTAT);
 		if (rezultate.size() == 0) { cout << "\nnu exista acest aliment"; continue; }
@@ -132,22 +149,39 @@ int main()
 		cout << "\nati ales " << rezultate[alegere - 1].nume << " ";
 		Aliment ales = rezultate[alegere - 1];
 		float gramaj; cout << "\nintroduceti gramajul (grame): "; cin >> gramaj;
+		if (cin.fail() || gramaj <= 0)
+		{
+			cin.clear();
+			cin.ignore(10000, '\n');
+			cout << "\ngramaj invalid\n";
+			continue;
+		}
 		float procent; procent = gramaj / 100;
 		cout << "calorii: " << ales.calorii * procent << "| ";	cout << "proteine: " << ales.proteine * procent << "| "; cout << "grasimi: " << ales.grasimi * procent << "| "; 	cout << "grasimi_saturate " << ales.grasimi_saturate * procent << "| ";	cout << "grasimi_poli: " << ales.grasimi_poli * procent << "| ";	cout << "grasimi_mono: " << ales.grasimi_mono * procent << "| ";	cout << "carbohidrati: " << ales.carbohidrati * procent << "| ";	cout << "fibre: " << ales.fibre * procent << "| ";	cout << "zahar: " << ales.zahar * procent << "| ";	cout << "alcool: " << ales.alcool * procent << "| ";
 		cout << "\n";
 		int masa; cout << "\nintroduceti masa (1-mic dejun; 2 - pranz; 3 - cina; 4 - gustare) "; cin >> masa;
-		jurnal(ales, gramaj, masa);
+		if (cin.fail() || masa < 1 || masa > 4)
+		{
+			cin.clear();
+			cin.ignore(10000, '\n');
+			cout << "\nmasa invalida\n";
+			continue;
+		}
+		cin.ignore(10000, '\n');
 		Consumat c;
 		c.aliment = ales;
 		c.gramaj = gramaj;
 		c.masa = masa;
 		consumate.push_back(c);
-		cin.ignore(10000, '\n');
 
-		caloriiZ += ales.calorii * procent; proteineZ += ales.proteine * procent; grasimiZ += ales.grasimi* procent; grasimi_saturateZ += ales.grasimi_saturate * procent; grasimi_poliZ += ales.grasimi_poli * procent; grasimi_monoZ += ales.grasimi_mono * procent; carbohidratiZ += ales.carbohidrati * procent; fibreZ += ales.fibre * procent; zaharZ = 0, alcoolZ += ales.alcool * procent;
+		caloriiZ += ales.calorii * procent; proteineZ += ales.proteine * procent; grasimiZ += ales.grasimi * procent; grasimi_saturateZ += ales.grasimi_saturate * procent; grasimi_poliZ += ales.grasimi_poli * procent; grasimi_monoZ += ales.grasimi_mono * procent; carbohidratiZ += ales.carbohidrati * procent; fibreZ += ales.fibre * procent; zaharZ += ales.zahar * procent; alcoolZ += ales.alcool * procent;
 
 	}
 	if (caloriiZ > 0)
+		//scriu in jurnal abia acum, ca sa nu raman alimentele sterse
+		for (int i = 0;i < consumate.size();i++)
+			jurnal(consumate[i].aliment, consumate[i].gramaj, consumate[i].masa);
+	if (consumate.size() > 0)
 		jurnal_total(caloriiZ, proteineZ, grasimiZ, grasimi_saturateZ, grasimi_poliZ, grasimi_monoZ, carbohidratiZ, fibreZ, zaharZ, alcoolZ);
 }
 
